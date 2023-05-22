@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  slack-app
+
+  Sample SAM Template for slack-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 300
+    Tracing: Active
+    MemorySize: 512
+  Api:
+    TracingEnabled: true
+
+Resources:
+  StableDiffusionFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: stable-diffusion/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Events:
+        StableDiffusion:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /stable-diffusion
+            Method: post
+      Environment:
+        Variables:
+          SLACK_APP_ID: SLACK_APP_ID
+          SLACK_SIGNING_SECRET: SLACK_SIGNING_SECRET
+          SLACK_BOT_TOKEN: SLACK_BOT_TOKEN
+          REPLICATE_API_TOKEN: REPLICATE_API_TOKEN
+          REPLICATE_API_URL: REPLICATE_API_URL
+          OPENAI_API_KEY: OPENAI_API_KEY
+          STABILITY_API_KEY: STABILITY_API_KEY
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - app.ts
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Join:
+        - ''
+        - - ApplicationInsights-SAM-
+          - Ref: AWS::StackName
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Fn::Join:
+        - ''
+        - - ApplicationInsights-SAM-
+          - Ref: AWS::StackName
+      AutoConfigurationEnabled: 'true'
+    DependsOn: ApplicationResourceGroup
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  StableDiffusionApi:
+    Description: API Gateway endpoint URL for Prod stage for Stable-Diffusion  function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/stable-diffusion/"
+  StableDiffusionFunction:
+    Description: Stable-Diffusion  Lambda Function ARN
+    Value: !GetAtt StableDiffusionFunction.Arn
+  StableDiffusionFunctionIamRole:
+    Description: Implicit IAM Role created for Stable-Diffusion function
+    Value: !GetAtt StableDiffusionFunctionnRole.Arn
