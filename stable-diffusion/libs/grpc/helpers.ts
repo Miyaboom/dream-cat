@@ -78,17 +78,16 @@ export function executeGenerationRequest(
   return new Promise<Generation.Answer>((resolve, reject) => {
     const stream = client.generate(request, metadata);
     stream.on('data', (response) => {
-      console.log(response);
       resolve(response);
     });
     stream.on('status', (status) => {
-      console.log(status);
+      console.log(status.code);
       if (status.code !== GRPCWeb.Code.OK) {
         reject(status);
       }
     });
     stream.on('end', (end) => {
-      console.log(end);
+      console.log(end?.code);
       if (end?.code !== GRPCWeb.Code.OK) {
         reject(end);
       }

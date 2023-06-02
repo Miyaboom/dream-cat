@@ -79,4 +79,4 @@ Outputs:
     Value: !GetAtt StableDiffusionFunction.Arn
   StableDiffusionFunctionIamRole:
     Description: Implicit IAM Role created for Stable-Diffusion function
-    Value: !GetAtt StableDiffusionFunctionnRole.Arn
+    Value: !GetAtt StableDiffusionFunction.Arn
